@@ -1,6 +1,4 @@
 // глобальные переменные
-
-let _id = 0
 let _users = []
 let _profiles = []
 let _socials = []
@@ -8,9 +6,9 @@ let _socials = []
 // ивенты
 
 document.querySelector('#btnRandom').addEventListener('click', (e)=>{
-  User.userIdCount()
-  const user = new User(_users.length, User.userRandom(7), User.userRandom(10))
+  const user = new User(User.userRandom(7), User.userRandom(10))
   _users.push(user)
+  User.idUser++
   user.createProfile(faker.phone.phoneNumber(), faker.name.findName())
   user.createSocials(`https://vk.com/id${Math.floor(Math.random() * 1000000)}`, `https://facebook.com/profile.php?id=${Math.floor(Math.random() * 1000000)}`)
   console.log(_users)
@@ -20,8 +18,8 @@ document.querySelector('#btnRandom').addEventListener('click', (e)=>{
 // Класс Пользователь
 
 class User{
-  constructor(id, username, password) {
-    this.id = id
+  constructor(username, password) {
+    this.id = User.idUser
     this.username = username
     this.password = password
     this.regDate = moment().format('DD/MM/YYYY');
@@ -30,14 +28,18 @@ class User{
     }
   }
 
+  static idUser = 0
+
   createProfile(phone, fullname, username){
-    const profile = new Profile(this.id, phone, fullname, _users[this.id].username, this.id)
+    const profile = new Profile(phone, fullname, _users[this.id].username, this.id)
     _profiles.push(profile)
+    Profile.idProfile++
   }
 
   createSocials(vk, fb){
-    const social = new Social(this.id, vk, fb, this.id)
+    const social = new Social(_socials.length, vk, fb, this.id)
     _socials.push(social)
+    Social.idSocial++
   }
 
   ban(reason){
@@ -65,34 +67,34 @@ class User{
     }
     return result.join('');
   }
-
-  static userIdCount(){
-    _id++
-  }
 }
 
 // Класс Профиль
 
 class Profile{
-  constructor(id, phone, fullname, username, user_id) {
-    this.id = id
+  constructor(phone, fullname, username, user_id) {
+    this.id = Profile.idProfile
     this.username = username
     this.phone = phone
     this.fullname = fullname
     this.user_id = user_id
   }
+
+  static idProfile = 0;
 }
 
 // Класс Сети
 
 class Social {
-  constructor(id, vk, fb, user_id) {
-    this.id = id
+  constructor(vk, fb, user_id) {
+    this.id = Social.idSocial
     this.vk = vk
     this.fb = fb
     this.regDate = moment().format('DD/MM/YYYY');
     this.user_id = user_id
   }
+
+  static idSocial = 0;
 }
 
 //UI
@@ -102,7 +104,6 @@ class UI {
     const list = document.querySelector('#user-list');
     list.innerHTML ='';
     for (let i = 0; i < _users.length; i++){
-
       const tr = document.createElement('tr');
 
       tr.innerHTML = `
@@ -112,11 +113,16 @@ class UI {
       <td><a class="btn btn-danger btnDelete">Пока для красоты</a></td>
       `;
       list.append(tr)
+
+      // накидываю слушателей на ссылки профиля
       let allProfiles = document.querySelectorAll('.item-profile')
       allProfiles[i].addEventListener('click', ()=>{
-        console.log(_profiles[i])
+        _profiles.forEach((profile, index) =>{
+          if(profile.user_id === _users[i].id){
+            console.log(profile) // вывод профилей, которые относятся к данному пользователю. Надо было делать не профили, а типа сообщения. А то совсем чет странное получается :D
+          }
+        })
       })
-
     }
   }
 }
