@@ -1,14 +1,14 @@
 // ивенты
 document.querySelector('#btnRandom').addEventListener('click', (e)=>{ //при клике на кнопку создаем фейк пользователя
   User.loadId()
+  User.idUser++
   const user = new User(User.userRandom(7), User.userRandom(10))
+  User.saveId()
   Storage._users.push(user)
   console.log(Storage._users)
   user.createProfile(faker.phone.phoneNumber(), faker.name.findName(), this.username)
   user.createSocials(`https://vk.com/id${Math.floor(Math.random() * 1000000)}`, `https://facebook.com/profile.php?id=${Math.floor(Math.random() * 1000000)}`)
-  User.idUser++
 
-  User.saveId()
 
   Storage.save()
   UI.render()
@@ -17,35 +17,31 @@ document.querySelector('#btnRandom').addEventListener('click', (e)=>{ //при �
 // Класс Пользователь
 
 class User{
-  static idUser;
-
-  static saveId(){
-    localStorage.setItem('UserLastId', JSON.stringify(User.idUser))
-  }
-
-  static loadId(){
-    if (User.idUser !== null){
-      User.idUser = JSON.parse(localStorage.getItem('UserLastId'))
-    }else{
-      User.idUser = 0;
-    }
-  }
-
   constructor(username, password) {
-    this.id = User.idUser
-    this.username = username
-    this.password = password
+    this.id = User.idUser || 1
+    this.username = username || 'UserName'
+    this.password = password || 'qwerty123'
     this.regDate = moment().format('DD/MM/YYYY');
     this.isBanned = {
       banned: false
     }
   }
 
+  static idUser = 1;
+
+  static saveId(){
+    localStorage.setItem('UserLastId', JSON.stringify(User.idUser))
+  }
+
+  static loadId(){
+      User.idUser = JSON.parse(localStorage.getItem('UserLastId'))
+  }
+
   createProfile(phone, fullname, username){ // метод создания профиля пользователя
     Profile.loadId()
+    Profile.idProfile++
     const profile = new Profile(phone, fullname, username, this.id)
     Storage._profiles.push(profile)
-    Profile.idProfile++
 
     Profile.saveId()
 
@@ -54,9 +50,9 @@ class User{
 
   createSocials(vk, fb){ // метод создания социалок пользователя (?)
     Social.loadId()
+    Social.idSocial++
     const social = new Social(vk, fb, this.id)
     Storage._socials.push(social)
-    Social.idSocial++
 
     Social.saveId()
 
@@ -103,19 +99,15 @@ class Profile{
     this.user_id = user_id
   }
 
-  static idProfile; // Считаем айдишники
+  static idProfile = 1; // Считаем айдишники
 
   static saveId(){ // сохраняем значение айдишника в хранилище
     localStorage.setItem('ProfileLastId', JSON.stringify(Profile.idProfile))
   }
 
   static loadId(){
-    if (Profile.idProfile !== null){
       Profile.idProfile = JSON.parse(localStorage.getItem('ProfileLastId'))
-    }else{
-      Profile.idProfile = 0;
     }
-  }
 }
 
 // Класс Сети
@@ -129,18 +121,14 @@ class Social {
     this.user_id = user_id
   }
 
-  static idSocial; // Считаем айдишники
+  static idSocial = 1; // Считаем айдишники
 
   static saveId(){ // сохраняем значение айдишника в хранилище
     localStorage.setItem('SocialLastId', JSON.stringify(Social.idSocial))
   }
 
   static loadId(){
-    if (Social.idSocial !== null){
       Social.idSocial = JSON.parse(localStorage.getItem('SocialLastId'))
-    }else{
-      Social.idSocial = 0;
-    }
   }
 }
 
@@ -171,9 +159,6 @@ class UI {
         })
       })
     }
-    User.loadId()
-    Profile.loadId()
-    Social.loadId()
   }
 }
 
@@ -202,25 +187,17 @@ class Storage {
     // Обходим массивы, присваиваем классы объектам
 
     users.forEach((e, i) =>{
-      Storage._users.push(Object.assign(new User(e.username, e.password), Storage._users[i]))
-      Storage._users[i].id = i
+      Storage._users.push(Object.assign(new User(e.username, e.password), users[i]))
     })
 
     profiles.forEach((e, i) =>{
-      Storage._profiles.push(Object.assign(new Profile(e.phone, e.fullname, e.username, e.user_id), Storage._profiles[i]))
-      Storage._profiles[i].id = i
+      Storage._profiles.push(Object.assign(new Profile(e.phone, e.fullname, e.username, e.user_id), profiles[i]))
     })
 
     socials.forEach((e, i) =>{
-      Storage._socials.push(Object.assign(new Social(e.vk, e.fb, e.user_id), Storage._socials[i]))
-      Storage._socials[i].id = i
+      Storage._socials.push(Object.assign(new Social(e.vk, e.fb, e.user_id), socials[i]))
     })
   }
 }
-
-User.loadId()
-Profile.loadId()
-Social.loadId()
-
 Storage.load()
 UI.render()
