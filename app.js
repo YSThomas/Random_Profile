@@ -18,7 +18,7 @@ document.querySelector('#btnRandom').addEventListener('click', (e)=>{ //при �
 
 class User{
   constructor(username, password) {
-    this.id = User.idUser || 1
+    this.id = User.idUser || 300
     this.username = username || 'UserName'
     this.password = password || 'qwerty123'
     this.regDate = moment().format('DD/MM/YYYY');
@@ -27,7 +27,7 @@ class User{
     }
   }
 
-  static idUser = 1;
+  // static idUser = 1;
 
   static saveId(){
     localStorage.setItem('UserLastId', JSON.stringify(User.idUser))
@@ -197,7 +197,7 @@ class Storage {
     socials.forEach((e, i) =>{
       Storage._socials.push(Object.assign(new Social(e.vk, e.fb, e.user_id), socials[i]))
     })
+    UI.render()
   }
 }
 Storage.load()
-UI.render()
