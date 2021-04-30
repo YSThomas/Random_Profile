@@ -1,7 +1,7 @@
 // ивенты
 document.querySelector('#btnRandom').addEventListener('click', (e) => { //при клике на кнопку создаем фейк пользователя
   const user = new User(User.userRandom(7), User.userRandom(10))
-  Storage._users.push(user)
+  Storage.push(user)
   console.log(Storage._users)
   user.createProfile(faker.phone.phoneNumber(), faker.name.findName(), this.username)
   user.createSocials(`https://vk.com/id${Math.floor(Math.random() * 1000000)}`, `https://facebook.com/profile.php?id=${Math.floor(Math.random() * 1000000)}`)
@@ -55,13 +55,13 @@ class User {
 
   createProfile (phone = null, fullname = null, username = null) { // метод создания профиля пользователя
     const profile = new Profile(phone, fullname, username, this.id)
-    Storage._profiles.push(profile)
+    Storage.push(profile)
     Storage.save()
   }
 
   createSocials (vk, fb) { // метод создания социалок пользователя (?)
     const social = new Social(vk, fb, this.id)
-    Storage._socials.push(social)
+    Storage.push(social)
     Storage.save()
   }
 
@@ -215,10 +215,13 @@ class Storage {
 
   static push(item){ //
     if(item.__proto__.constructor === User){
+      this._users.push(item)
       console.log('Это был Юзер')
     }else if(item.__proto__.constructor === Profile){
+      this._profiles.push(item)
       console.log('Это был Профиль')
     }else if(item.__proto__.constructor === Social){
+      this._socials.push(item)
       console.log('Это был Социал')
     }else{
       console.log('Что-то не то попало в Storage.push()')
@@ -263,7 +266,6 @@ class Storage {
           Storage._socials.push(Object.assign(new Social(), socials[i]))
         })
       }
-      console.log('После ' + User._id)
     } catch (e) {
       console.error(e)
     }
