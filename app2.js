@@ -1,13 +1,37 @@
 // ивенты
 document.querySelector('#btnRandom').addEventListener('click', (e) => { //при клике на кнопку создаем фейк пользователя
   const user = new User(User.userRandom(7), User.userRandom(10))
+  const test = new Zaglushka() //удалить после теста
   Storage.push(user)
+  Storage.push(test) //удалить после теста
   // console.log(Storage._array)
   user.createProfile(faker.phone.phoneNumber(), faker.name.findName())
   user.createSocials(`https://vk.com/id${Math.floor(Math.random() * 1000000)}`, `https://facebook.com/profile.php?id=${Math.floor(Math.random() * 1000000)}`)
   Storage.save()
   UI.render()
 })
+
+class Zaglushka{
+  static _id = null
+
+  /**
+   * ТЕСТОВЫЙ КЛАСС!
+   */
+
+  constructor() {
+    this.id = Zaglushka.getNextId()
+    this.name = 'Заглушка для тестов'
+  }
+
+  static getNextId () {
+    if (Number.isInteger(User._id)) {
+      this._id++
+    } else {
+      this._id = 1
+    }
+    return this._id
+  }
+}
 
 // Класс Пользователь
 
@@ -260,7 +284,7 @@ class Storage {
         if (Array.isArray(keys) && keys.length) {
           local.forEach((item, index)=>{
             keys.forEach((e, i) => {
-                  this._array.push(Object.assign(new User(), keys[i]))
+                  // this._array.push(Object.assign(new User(), keys[i]))
             })
           })
         }
