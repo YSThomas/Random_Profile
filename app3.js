@@ -2,8 +2,8 @@
 document.querySelector('#btnRandom').addEventListener('click', (e) => { //при клике на кнопку создаем фейк пользователя
   const user = new User(User.userRandom(7), User.userRandom(10))
   Storage.push(user)
-  // console.log(Storage._array)
-  user.createProfile(faker.phone.phoneNumber(), faker.name.findName())
+  console.log(Storage._users)
+  user.createProfile(faker.phone.phoneNumber(), faker.name.findName(), this.username)
   user.createSocials(`https://vk.com/id${Math.floor(Math.random() * 1000000)}`, `https://facebook.com/profile.php?id=${Math.floor(Math.random() * 1000000)}`)
   Storage.save()
   UI.render()
@@ -53,8 +53,8 @@ class User {
     User._id = parseInt(localStorage.getItem('UserLastId')) || 0
   }
 
-  createProfile (phone, fullname, username) { // метод создания профиля пользователя
-    const profile = new Profile(phone, fullname, this.username, this.id)
+  createProfile (phone = null, fullname = null, username = null) { // метод создания профиля пользователя
+    const profile = new Profile(phone, fullname, username, this.id)
     Storage.push(profile)
     Storage.save()
   }
@@ -182,13 +182,13 @@ class UI {
   static render () {
     const list = document.querySelector('#user-list')
     list.innerHTML = ''
-    for (let i = 0; i < Storage._array.length; i++) {
+    for (let i = 0; i < Storage._users.length; i++) {
       const tr = document.createElement('tr')
 
       tr.innerHTML = `
-      <td class="item-username">${Storage._array[i].username}</td>
-      <td><a href="#" class="item-profile">${Storage._array[i].fullname}</a></td>
-      <td class="item-social"><a href="${Storage._array[i].vk}"><i class="fab fa-vk"></i></a> <a href="${Storage._array[i].fb}"><i class="fab fa-facebook-f"></i></a></td>
+      <td class="item-username">${Storage._users[i].username}</td>
+      <td><a href="#" class="item-profile">${Storage._profiles[i].fullname}</a></td>
+      <td class="item-social"><a href="${Storage._socials[i].vk}"><i class="fab fa-vk"></i></a> <a href="${Storage._socials[i].fb}"><i class="fab fa-facebook-f"></i></a></td>
       <td><a class="btn btn-danger btnDelete">Пока для красоты</a></td>
       `
       list.append(tr)
@@ -196,8 +196,8 @@ class UI {
       // накидываю слушателей на ссылки профиля
       let allProfiles = document.querySelectorAll('.item-profile')
       allProfiles[i].addEventListener('click', () => {
-        Storage._array.forEach((profile, index) => {
-          if (profile.user_id === Storage._array[i].id) {
+        Storage._profiles.forEach((profile, index) => {
+          if (profile.user_id === Storage._users[i].id) {
             console.log(profile) // вывод профилей, которые относятся к данному пользователю. Надо было делать не профили, а типа сообщения. А то совсем чет странное получается :D
           }
         })
@@ -209,65 +209,66 @@ class UI {
 // localStorage
 
 class Storage {
-  static _all = []
-  static _array = []
-  static _classes = []
+  static _users = []
+  static _profiles = []
+  static _socials = []
 
-  static push(item){ //закидывает в _array
-    if(item.__proto__.constructor){
-      this._array.push(item)
-      // console.log(`Это был ${item.__proto__.constructor.name}`)
+  static push(item){ //
+    if(item.__proto__.constructor === User){
+      this._users.push(item)
+      console.log('Это был Юзер')
+    }else if(item.__proto__.constructor === Profile){
+      this._profiles.push(item)
+      console.log('Это был Профиль')
+    }else if(item.__proto__.constructor === Social){
+      this._socials.push(item)
+      console.log('Это был Социал')
     }else{
       console.log('Что-то не то попало в Storage.push()')
     }
   }
 
   static save () { //сохранение в хранилище
-
-    this._classes = [...new Set(Storage._array.map(el => {
-      if (el.constructor.name){
-        return el.constructor.name
-      }
-    }))]
-
-    for (let j = 0; j < this._classes.length; j++){
-    let _forPush = []
-      for(let i = 0; i < this._array.length; i++){
-          if (this._classes[j] === this._array[i].constructor.name){
-            _forPush.push(this._array[i])
-            // console.log(_forPush)
-          }
-      }
-            localStorage.setItem(this._classes[j], JSON.stringify(_forPush))
-    }
-
-    localStorage.setItem('all', JSON.stringify(this._array))
+    localStorage.setItem('Users', JSON.stringify(Storage._users))
     User.saveId()
+    localStorage.setItem('Profiles', JSON.stringify(Storage._profiles))
     Profile.saveId()
+    localStorage.setItem('Socials', JSON.stringify(Storage._socials))
     Social.saveId()
   }
 
   static load () { // загрузка из хранилища
-    let keys = []
-    let local = Object.keys(localStorage)
-    console.log(local)
+    let users = []
+    let profiles = []
+    let socials = []
 
-      try {
-        keys = JSON.parse(localStorage.getItem('all'))
+    try {
+      users = JSON.parse(localStorage.getItem('Users'),)
+      profiles = JSON.parse(localStorage.getItem('Profiles'))
+      socials = JSON.parse(localStorage.getItem('Socials'))
 
-        // Обходим массивы, присваиваем классы объектам. Если это массивы ;)
+      // Обходим массивы, присваиваем классы объектам. Если это массивы ;)
 
-        if (Array.isArray(keys) && keys.length) {
-          local.forEach((item, index)=>{
-            keys.forEach((e, i) => {
-                  this._array.push(Object.assign(new User(), keys[i]))
-            })
-          })
-        }
-        // console.log(keys)
-      } catch (e) {
-        console.error(e)
+      if (Array.isArray(users) && users.length) {
+        users.forEach((e, i) => {
+          Storage._users.push(Object.assign(new User(), users[i]))
+        })
       }
+
+      if (Array.isArray(users) && users.length) {
+        profiles.forEach((e, i) => {
+          Storage._profiles.push(Object.assign(new Profile(), profiles[i]))
+        })
+      }
+
+      if (Array.isArray(users) && users.length) {
+        socials.forEach((e, i) => {
+          Storage._socials.push(Object.assign(new Social(), socials[i]))
+        })
+      }
+    } catch (e) {
+      console.error(e)
+    }
     UI.render()
   }
 }
