@@ -1,24 +1,21 @@
 // ивенты
 document.querySelector('#btnRandom').addEventListener('click', (e) => { //при клике на кнопку создаем фейк пользователя
   const user = new User(User.userRandom(7), User.userRandom(10))
-  const test = new Zaglushka() //удалить после теста
   Storage.push(user)
-  Storage.push(test) //удалить после теста
-  // console.log(Storage._array)
   user.createProfile(faker.phone.phoneNumber(), faker.name.findName())
   user.createSocials(`https://vk.com/id${Math.floor(Math.random() * 1000000)}`, `https://facebook.com/profile.php?id=${Math.floor(Math.random() * 1000000)}`)
   Storage.save()
   UI.render()
 })
 
-class Zaglushka{
+class Zaglushka {
   static _id = null
 
   /**
    * ТЕСТОВЫЙ КЛАСС!
    */
 
-  constructor() {
+  constructor () {
     this.id = Zaglushka.getNextId()
     this.name = 'Заглушка для тестов'
   }
@@ -38,7 +35,6 @@ class Zaglushka{
 class User {
   static _id = null
 
-
   /**
    * Создает объект акакунта пользователя
    *
@@ -47,9 +43,9 @@ class User {
    * @param isBanned
    */
   constructor (username = null, password = null, isBanned = false) {
-    // if (User._id === null) {
-    //   User.loadId()
-    // }  // ВОЗМОЖНО ОШИБКА
+    if (User._id === null) {
+      User.loadId()
+    }  // ВОЗМОЖНО ОШИБКА
     this.id = User.getNextId()
     this.username = username
     this.password = password
@@ -73,8 +69,13 @@ class User {
   }
 
   static loadId () {
-    // здесь мы парсим из ЛС или ставим 0, потому что getNextId прибавит +1
-    User._id = parseInt(localStorage.getItem('UserLastId')) || 0
+    try {
+      // здесь мы парсим из ЛС или ставим 0, потому что getNextId прибавит +1
+      User._id = parseInt(localStorage.getItem('UserLastId')) || 0
+    } catch (e) {
+      console.log(e)
+      User._id = 0
+    }
   }
 
   createProfile (phone, fullname, username) { // метод создания профиля пользователя
@@ -131,9 +132,9 @@ class Profile {
    * @param user_id - делать его null по умолчанию, неправильно - нужно валидировать. Для простоты - пока оставим это так, но консистентность данных может пострадать на раз
    */
   constructor (phone = null, fullname = null, username = null, user_id = null) {
-    // if (Profile._id === null) {
-    //   Profile.loadId()
-    // }
+    if (Profile._id === null) {
+      Profile.loadId()
+    }
     this.id = Profile.getNextId()
     this.username = username
     this.phone = phone
@@ -155,7 +156,12 @@ class Profile {
   }
 
   static loadId () {
-    Profile._id = parseInt(localStorage.getItem('ProfileLastId')) || 0
+    try {
+      Profile._id = parseInt(localStorage.getItem('ProfileLastId')) || 0
+    } catch (e) {
+      console.log(e)
+      Profile._id = 0
+    }
   }
 }
 
@@ -172,9 +178,9 @@ class Social {
    * @param user_id
    */
   constructor (vk = null, fb = null, user_id = null) {
-    // if (Social._id === null) {
-    //   Social.loadId()
-    // }
+    if (Social._id === null) {
+      Social.loadId()
+    }
     this.id = Social.getNextId()
     this.vk = vk
     this.fb = fb
@@ -196,7 +202,12 @@ class Social {
   }
 
   static loadId () {
-    Social._id = parseInt(localStorage.getItem('SocialLastId')) || 0
+    try {
+      Social._id = parseInt(localStorage.getItem('SocialLastId')) || 0
+    } catch (e) {
+      console.log(e)
+      Social._id = 0
+    }
   }
 }
 
@@ -206,26 +217,28 @@ class UI {
   static render () {
     const list = document.querySelector('#user-list')
     list.innerHTML = ''
-    for (let i = 0; i < Storage._array.length; i++) {
+    let array = Storage.getByClass('User')
+    for (let i = 0; i < array.length; i++) {
+      let profile = Storage.getByField('Profile', 'user_id', array[i].id)
+      let social = Storage.getByField('Social', 'user_id', array[i].id)
       const tr = document.createElement('tr')
-
       tr.innerHTML = `
-      <td class="item-username">${Storage._array[i].username}</td>
-      <td><a href="#" class="item-profile">${Storage._array[i].fullname}</a></td>
-      <td class="item-social"><a href="${Storage._array[i].vk}"><i class="fab fa-vk"></i></a> <a href="${Storage._array[i].fb}"><i class="fab fa-facebook-f"></i></a></td>
+      <td class="item-username">${array[i].username}</td>
+      <td><a href="#" class="item-profile">${profile.fullname}</a></td>
+      <td class="item-social"><a href="${social.vk}"><i class="fab fa-vk"></i></a> <a href="${social.fb}"><i class="fab fa-facebook-f"></i></a></td>
       <td><a class="btn btn-danger btnDelete">Пока для красоты</a></td>
       `
       list.append(tr)
-
-      // накидываю слушателей на ссылки профиля
-      let allProfiles = document.querySelectorAll('.item-profile')
-      allProfiles[i].addEventListener('click', () => {
-        Storage._array.forEach((profile, index) => {
-          if (profile.user_id === Storage._array[i].id) {
-            console.log(profile) // вывод профилей, которые относятся к данному пользователю. Надо было делать не профили, а типа сообщения. А то совсем чет странное получается :D
-          }
-        })
-      })
+      // тут логично было бы вывести всю инфу из профиля - телефон там и прочее, фио )
+//      // накидываю слушателей на ссылки профиля
+//      let allProfiles = document.querySelectorAll('.item-profile')
+//      allProfiles[i].addEventListener('click', () => {
+//        array.forEach((profile, index) => {
+//          if (profile.user_id === Storage._array[i].id) {
+//            console.log(profile) // вывод профилей, которые относятся к данному пользователю. Надо было делать не профили, а типа сообщения. А то совсем чет странное получается :D
+//          }
+//        })
+//      })
     }
   }
 }
@@ -233,65 +246,62 @@ class UI {
 // localStorage
 
 class Storage {
-  static _all = []
-  static _array = []
-  static _classes = []
+  static _savers = {}
+  static _db = {}
 
-  static push(item){ //закидывает в _array
-    if(item.__proto__.constructor){
-      this._array.push(item)
-      // console.log(`Это был ${item.__proto__.constructor.name}`)
-    }else{
+  static push (item) { //закидывает в _array
+    if (typeof item === 'object') {
+      let className = item.constructor.name
+      if (!Array.isArray(Storage._db[className])) {
+        Storage._db[className] = []
+      }
+      if (!Storage._savers.hasOwnProperty(className) && item.constructor.hasOwnProperty('saveId') && typeof item.constructor.saveId === 'function') {
+        Storage._savers[className] = item.constructor.saveId
+      }
+      Storage._db[className].push(item)
+    } else {
       console.log('Что-то не то попало в Storage.push()')
     }
   }
 
-  static save () { //сохранение в хранилище
-
-    this._classes = [...new Set(Storage._array.map(el => {
-      if (el.constructor.name){
-        return el.constructor.name
-      }
-    }))]
-
-    for (let j = 0; j < this._classes.length; j++){
-    let _forPush = []
-      for(let i = 0; i < this._array.length; i++){
-          if (this._classes[j] === this._array[i].constructor.name){
-            _forPush.push(this._array[i])
-            // console.log(_forPush)
-          }
-      }
-            localStorage.setItem(this._classes[j], JSON.stringify(_forPush))
+  static getByClass (className = null) {
+    if (Storage._db.hasOwnProperty(className) && Array.isArray(Storage._db[className])) {
+      return Storage._db[className]
     }
+    return []
+  }
 
-    localStorage.setItem('all', JSON.stringify(this._array))
-    User.saveId()
-    Profile.saveId()
-    Social.saveId()
+  static getById( className, id = null ) {
+    let list = Storage.getByClass(className)
+    return list.find(e => e.id === id)
+  }
+
+  static getByField( className, field, value = null ) {
+    let list = Storage.getByClass(className)
+    return list.find(e => e.hasOwnProperty(field) && e[field] === value)
+  }
+
+  static save () { //сохранение в хранилище
+    localStorage.setItem('Storage', JSON.stringify(Storage._db))
+    for (let c of Object.keys(this._db)) {
+      if (Array.isArray(Storage._db[c]) && Storage._db[c].length && Storage._savers.hasOwnProperty(c) && typeof Storage._savers[c] === 'function') {
+        Storage._savers[c]()
+      }
+    }
   }
 
   static load () { // загрузка из хранилища
-    let keys = []
-    let local = Object.keys(localStorage)
-    console.log(local)
-
-      try {
-        keys = JSON.parse(localStorage.getItem('all'))
-
-        // Обходим массивы, присваиваем классы объектам. Если это массивы ;)
-
-        if (Array.isArray(keys) && keys.length) {
-          local.forEach((item, index)=>{
-            keys.forEach((e, i) => {
-                  // this._array.push(Object.assign(new User(), keys[i]))
-            })
-          })
-        }
-        // console.log(keys)
-      } catch (e) {
-        console.error(e)
+    try {
+      Storage._db = JSON.parse(localStorage.getItem('Storage')) || {}
+      for (let c of Object.keys(this._db)) {
+        Array(Storage._db[c]).forEach((e, i) => {
+          e = Object.assign(Function(`new ${c}()`), e)
+        })
+        Function(`${c}.loadId()`)
       }
+    } catch (e) {
+      console.log(e)
+    }
     UI.render()
   }
 }
